@@ -90,6 +90,73 @@ func TestTransformUnionType(t *testing.T) {
 	}
 }
 
+func TestTransformEnumType(t *testing.T) {
+	tests := []struct {
+		name  string
+		input []string
+		want  string
+	}{
+		{
+			name: "multi-line enum",
+			input: []string{
+				"type Color enum {",
+				"\tRed",
+				"\tGreen",
+				"\tBlue",
+				"}",
+			},
+			want: strings.Join([]string{
+				"type Color int",
+				"",
+				"const (",
+				"\tColorRed Color = iota",
+				"\tColorGreen",
+				"\tColorBlue",
+				")",
+			}, "\n"),
+		},
+		{
+			name:  "single-line enum",
+			input: []string{`type State enum { Pending, Running, Done }`},
+			want: strings.Join([]string{
+				"type State int",
+				"",
+				"const (",
+				"\tStatePending State = iota",
+				"\tStateRunning",
+				"\tStateDone",
+				")",
+			}, "\n"),
+		},
+		{
+			name: "indented enum",
+			input: []string{
+				"\ttype Token enum {",
+				"\t\tEOF",
+				"\t\tIdent",
+				"\t}",
+			},
+			want: strings.Join([]string{
+				"\ttype Token int",
+				"",
+				"\tconst (",
+				"\t\tTokenEOF Token = iota",
+				"\t\tTokenIdent",
+				"\t)",
+			}, "\n"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := transformEnumType(tc.input)
+			if got != tc.want {
+				t.Errorf("\ninput: %#v\n  got: %q\n want: %q", tc.input, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestProcess(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -178,6 +245,48 @@ type Bar interface{ int | string }
 			}, "\n"),
 		},
 		{
+			name: "enum type",
+			input: strings.Join([]string{
+				"package foo",
+				"",
+				"type Color enum {",
+				"\tRed",
+				"\tGreen",
+				"\tBlue",
+				"}",
+			}, "\n"),
+			want: strings.Join([]string{
+				"package foo",
+				"",
+				"type Color int",
+				"",
+				"const (",
+				"\tColorRed Color = iota",
+				"\tColorGreen",
+				"\tColorBlue",
+				")",
+			}, "\n"),
+		},
+		{
+			name: "single-line enum type",
+			input: strings.Join([]string{
+				"package foo",
+				"",
+				"type State enum { Pending, Running, Done }",
+			}, "\n"),
+			want: strings.Join([]string{
+				"package foo",
+				"",
+				"type State int",
+				"",
+				"const (",
+				"\tStatePending State = iota",
+				"\tStateRunning",
+				"\tStateDone",
+				")",
+			}, "\n"),
+		},
+		{
 			name: "plain go file passes through unchanged",
 			input: strings.TrimSpace(`
 package main
@@ -196,6 +305,21 @@ import "fmt"
 func main() {
 	fmt.Println("hello, world")
 }
+`),
+		},
+		{
+			name: "comments with enum syntax are preserved",
+			input: strings.TrimSpace(`
+package foo
+
+// type Color enum { Red, Green, Blue }
+type Number = int | float64
+`),
+			want: strings.TrimSpace(`
+package foo
+
+// type Color enum { Red, Green, Blue }
+type Number interface{ int | float64 }
 `),
 		},
 	}

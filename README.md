@@ -61,6 +61,30 @@ type Ordered = ~int  | ~int8  | ~int16 | ~int32 | ~int64  |
 
 All existing `.go` syntax is accepted unchanged — gogo is a strict superset.
 
+### Enum ADTs
+
+gogo also supports a minimal enum syntax for closed sets of variants:
+
+```gogo
+type Color enum {
+    Red
+    Green
+    Blue
+}
+```
+
+This is transformed into an integer-backed Go enum with generated constants:
+
+```go
+type Color int
+
+const (
+    ColorRed Color = iota
+    ColorGreen
+    ColorBlue
+)
+```
+
 ## Example
 
 See [`examples/union/main.gogo`](examples/union/main.gogo) for a working example.

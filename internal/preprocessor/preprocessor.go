@@ -20,6 +20,26 @@
 // Union types can be used as constraints for generic functions:
 //
 //	func Sum[T Number](a, b T) T { return a + b }
+//
+// # Enum ADTs
+//
+// gogo also supports a minimal enum syntax:
+//
+//	type Color enum {
+//		Red
+//		Green
+//		Blue
+//	}
+//
+// This is transformed into a Go integer-backed enum:
+//
+//	type Color int
+//
+//	const (
+//		ColorRed Color = iota
+//		ColorGreen
+//		ColorBlue
+//	)
 package preprocessor
 
 import (
@@ -60,6 +80,20 @@ func Process(src string) string {
 			continue
 		}
 
+		if isEnumTypeStart(trimmed) {
+			block := []string{line}
+			for !strings.Contains(lines[i], "}") {
+				i++
+				if i >= len(lines) {
+					return strings.Join(append(out, block...), "\n")
+				}
+				block = append(block, lines[i])
+			}
+			out = append(out, transformEnumType(block))
+			i++
+			continue
+		}
+
 		// Detect the start of a union type declaration.  A declaration may
 		// span multiple lines when each line (except the last) ends with '|'.
 		if isUnionTypeStart(trimmed) {
@@ -91,6 +125,20 @@ func Process(src string) string {
 	return strings.Join(out, "\n")
 }
 
+// isEnumTypeStart reports whether trimmed begins a gogo enum declaration.
+func isEnumTypeStart(trimmed string) bool {
+	if !strings.HasPrefix(trimmed, "type ") {
+		return false
+	}
+	rest := strings.TrimSpace(trimmed[len("type "):])
+	nameEnd := strings.IndexAny(rest, " \t{")
+	if nameEnd <= 0 {
+		return false
+	}
+	rest = strings.TrimSpace(rest[nameEnd:])
+	return strings.HasPrefix(rest, "enum") && strings.Contains(rest, "{")
+}
+
 // isUnionTypeStart reports whether trimmed is the beginning of a gogo union
 // type declaration (i.e. "type Name = …" where the RHS contains '|').
 func isUnionTypeStart(trimmed string) bool {
@@ -105,6 +153,80 @@ func isUnionTypeStart(trimmed string) bool {
 	return strings.Contains(rhs, "|") &&
 		!strings.Contains(rhs, "interface") &&
 		!strings.Contains(rhs, "{")
+}
+
+// transformEnumType converts a gogo enum declaration block into an int-backed
+// Go enum and prefixed constants.
+func transformEnumType(lines []string) string {
+	if len(lines) == 0 {
+		return ""
+	}
+
+	header := strings.TrimSpace(lines[0])
+	rest := strings.TrimSpace(header[len("type "):])
+	nameEnd := strings.IndexAny(rest, " \t{")
+	if nameEnd <= 0 {
+		return strings.Join(lines, "\n")
+	}
+	name := rest[:nameEnd]
+	rest = strings.TrimSpace(rest[nameEnd:])
+	if !strings.HasPrefix(rest, "enum") {
+		return strings.Join(lines, "\n")
+	}
+
+	bodyStart := strings.Index(header, "{")
+	if bodyStart < 0 {
+		return strings.Join(lines, "\n")
+	}
+
+	bodyParts := []string{header[bodyStart+1:]}
+	for _, line := range lines[1:] {
+		bodyParts = append(bodyParts, line)
+	}
+	body := strings.Join(bodyParts, "\n")
+	if end := strings.LastIndex(body, "}"); end >= 0 {
+		body = body[:end]
+	}
+
+	fields := strings.FieldsFunc(body, func(r rune) bool {
+		return r == '\n' || r == ','
+	})
+	var variants []string
+	for _, field := range fields {
+		variant := strings.TrimSpace(field)
+		if variant == "" || strings.HasPrefix(variant, "//") {
+			continue
+		}
+		variants = append(variants, variant)
+	}
+	if len(variants) == 0 {
+		return strings.Join(lines, "\n")
+	}
+
+	indent := lines[0][:len(lines[0])-len(strings.TrimLeft(lines[0], " \t"))]
+	var b strings.Builder
+	b.WriteString(indent)
+	b.WriteString("type ")
+	b.WriteString(name)
+	b.WriteString(" int\n\n")
+	b.WriteString(indent)
+	b.WriteString("const (\n")
+	for i, variant := range variants {
+		b.WriteString(indent)
+		b.WriteString("\t")
+		b.WriteString(name)
+		b.WriteString(variant)
+		if i == 0 {
+			b.WriteString(" ")
+			b.WriteString(name)
+			b.WriteString(" = iota\n")
+			continue
+		}
+		b.WriteString("\n")
+	}
+	b.WriteString(indent)
+	b.WriteString(")")
+	return b.String()
 }
 
 // transformUnionType converts a gogo union type declaration to a Go interface

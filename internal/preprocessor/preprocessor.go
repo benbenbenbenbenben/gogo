@@ -83,14 +83,14 @@ func Process(src string) string {
 		if isEnumTypeStart(trimmed) {
 			var block []string
 			for {
+				if i >= len(lines) {
+					return strings.Join(append(out, block...), "\n")
+				}
 				block = append(block, lines[i])
 				if strings.Contains(lines[i], "}") {
 					break
 				}
 				i++
-				if i >= len(lines) {
-					return strings.Join(append(out, block...), "\n")
-				}
 			}
 			out = append(out, transformEnumType(block))
 			i++
@@ -191,17 +191,7 @@ func transformEnumType(lines []string) string {
 		body = body[:end]
 	}
 
-	fields := strings.FieldsFunc(body, func(r rune) bool {
-		return r == '\n' || r == ','
-	})
-	var variants []string
-	for _, field := range fields {
-		variant := strings.TrimSpace(field)
-		if variant == "" || strings.HasPrefix(variant, "//") {
-			continue
-		}
-		variants = append(variants, variant)
-	}
+	variants := parseEnumVariants(body)
 	if len(variants) == 0 {
 		return strings.Join(lines, "\n")
 	}
@@ -282,4 +272,22 @@ func transformUnionType(line string) string {
 
 func getIndent(line string) string {
 	return line[:len(line)-len(strings.TrimLeft(line, " \t"))]
+}
+
+func parseEnumVariants(body string) []string {
+	var variants []string
+	for _, line := range strings.Split(body, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "//") {
+			continue
+		}
+		for _, part := range strings.Split(line, ",") {
+			variant := strings.TrimSpace(part)
+			if variant == "" {
+				continue
+			}
+			variants = append(variants, variant)
+		}
+	}
+	return variants
 }

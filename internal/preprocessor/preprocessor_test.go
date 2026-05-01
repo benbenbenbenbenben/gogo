@@ -129,6 +129,19 @@ func TestTransformEnumType(t *testing.T) {
 			}, "\n"),
 		},
 		{
+			name:  "enum with trailing commas",
+			input: []string{`type Mode enum { Read, Write, Exec, }`},
+			want: strings.Join([]string{
+				"type Mode int",
+				"",
+				"const (",
+				"\tModeRead Mode = iota",
+				"\tModeWrite",
+				"\tModeExec",
+				")",
+			}, "\n"),
+		},
+		{
 			name: "indented enum",
 			input: []string{
 				"\ttype Token enum {",
@@ -283,6 +296,25 @@ type Bar interface{ int | string }
 				"\tStatePending State = iota",
 				"\tStateRunning",
 				"\tStateDone",
+				")",
+			}, "\n"),
+		},
+		{
+			name: "enum type with trailing commas",
+			input: strings.Join([]string{
+				"package foo",
+				"",
+				"type Mode enum { Read, Write, Exec, }",
+			}, "\n"),
+			want: strings.Join([]string{
+				"package foo",
+				"",
+				"type Mode int",
+				"",
+				"const (",
+				"\tModeRead Mode = iota",
+				"\tModeWrite",
+				"\tModeExec",
 				")",
 			}, "\n"),
 		},

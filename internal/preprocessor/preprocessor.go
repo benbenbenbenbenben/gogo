@@ -81,13 +81,16 @@ func Process(src string) string {
 		}
 
 		if isEnumTypeStart(trimmed) {
-			block := []string{line}
-			for !strings.Contains(lines[i], "}") {
+			var block []string
+			for {
+				block = append(block, lines[i])
+				if strings.Contains(lines[i], "}") {
+					break
+				}
 				i++
 				if i >= len(lines) {
 					return strings.Join(append(out, block...), "\n")
 				}
-				block = append(block, lines[i])
 			}
 			out = append(out, transformEnumType(block))
 			i++
@@ -113,7 +116,7 @@ func Process(src string) string {
 			}
 
 			// Preserve original indentation from the first line.
-			indent := line[:len(line)-len(strings.TrimLeft(line, " \t"))]
+			indent := getIndent(line)
 			out = append(out, transformUnionType(indent+strings.TrimSpace(combined)))
 			i++
 			continue
@@ -203,7 +206,7 @@ func transformEnumType(lines []string) string {
 		return strings.Join(lines, "\n")
 	}
 
-	indent := lines[0][:len(lines[0])-len(strings.TrimLeft(lines[0], " \t"))]
+	indent := getIndent(lines[0])
 	var b strings.Builder
 	b.WriteString(indent)
 	b.WriteString("type ")
@@ -272,7 +275,11 @@ func transformUnionType(line string) string {
 	}
 
 	// Preserve original indentation.
-	indent := line[:len(line)-len(strings.TrimLeft(line, " \t"))]
+	indent := getIndent(line)
 
 	return indent + "type " + name + " interface{ " + rhs + " }"
+}
+
+func getIndent(line string) string {
+	return line[:len(line)-len(strings.TrimLeft(line, " \t"))]
 }

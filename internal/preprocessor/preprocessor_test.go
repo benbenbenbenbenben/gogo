@@ -424,6 +424,25 @@ type Unsigned interface{ uint | uint8 | uint16 | uint32 | uint64 }
 			}, "\n"),
 		},
 		{
+			name: "duplicate enum variants pass through unchanged",
+			input: strings.Join([]string{
+				"package foo",
+				"",
+				"type Bad enum {",
+				"\tRed",
+				"\tRed",
+				"}",
+			}, "\n"),
+			want: strings.Join([]string{
+				"package foo",
+				"",
+				"type Bad enum {",
+				"\tRed",
+				"\tRed",
+				"}",
+			}, "\n"),
+		},
+		{
 			name: "comments with enum syntax are preserved",
 			input: strings.TrimSpace(`
 package foo

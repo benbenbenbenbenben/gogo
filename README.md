@@ -91,18 +91,18 @@ Payload-carrying enums are transformed into interface-based tagged unions with g
 ```go
 type Color interface{ isColor() }
 
-type __gogo_internal_Color_Red struct{}
-func (__gogo_internal_Color_Red) isColor() {}
-var ColorRed Color = __gogo_internal_Color_Red{}
+type _gogo_internal_Color_Red struct{}
+func (_gogo_internal_Color_Red) isColor() {}
+var ColorRed Color = _gogo_internal_Color_Red{}
 
-type __gogo_internal_Color_RGB struct {
+type _gogo_internal_Color_RGB struct {
     r byte
     g byte
     b byte
 }
-func (__gogo_internal_Color_RGB) isColor() {}
+func (_gogo_internal_Color_RGB) isColor() {}
 func ColorRGB(r byte, g byte, b byte) Color {
-    return __gogo_internal_Color_RGB{r: r, g: g, b: b}
+    return _gogo_internal_Color_RGB{r: r, g: g, b: b}
 }
 ```
 

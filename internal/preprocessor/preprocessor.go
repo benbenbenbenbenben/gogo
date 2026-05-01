@@ -7,15 +7,15 @@
 //
 // gogo extends Go with a concise union-type declaration syntax:
 //
-// type Name = TypeA | TypeB | TypeC
+//	type Name = TypeA | TypeB | TypeC
 //
 // This is transformed into a Go 1.18+ interface type constraint:
 //
-// type Name interface{ TypeA | TypeB | TypeC }
+//	type Name interface{ TypeA | TypeB | TypeC }
 //
 // The ~ approximation element is also supported:
 //
-// type Integer = ~int | ~int8 | ~int16 | ~int32 | ~int64
+//	type Integer = ~int | ~int8 | ~int16 | ~int32 | ~int64
 //
 // Union types can be used as constraints for generic functions:
 //

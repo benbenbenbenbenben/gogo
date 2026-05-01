@@ -89,20 +89,20 @@ const (
 Payload-carrying enums are transformed into interface-based tagged unions with generated constructors:
 
 ```go
-type Color interface{ isColor() }
+type Color interface{ _gogo_is_Color() }
 
-type _gogo_internal_Color_Red struct{}
-func (_gogo_internal_Color_Red) isColor() {}
-var ColorRed Color = _gogo_internal_Color_Red{}
+type _gogo_gen_Color_Red struct{}
+func (_gogo_gen_Color_Red) _gogo_is_Color() {}
+var ColorRed Color = _gogo_gen_Color_Red{}
 
-type _gogo_internal_Color_RGB struct {
+type _gogo_gen_Color_RGB struct {
     r byte
     g byte
     b byte
 }
-func (_gogo_internal_Color_RGB) isColor() {}
+func (_gogo_gen_Color_RGB) _gogo_is_Color() {}
 func ColorRGB(r byte, g byte, b byte) Color {
-    return _gogo_internal_Color_RGB{r: r, g: g, b: b}
+    return _gogo_gen_Color_RGB{r: r, g: g, b: b}
 }
 ```
 

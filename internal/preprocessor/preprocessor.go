@@ -577,11 +577,11 @@ func renderFieldAssignments(fields []enumField) string {
 }
 
 func enumMarkerMethod(name string) string {
-	return "is" + name
+	return "_gogo_is_" + name
 }
 
 func generatedVariantType(enumName, variantName string) string {
-	return fmt.Sprintf("_gogo_internal_%s_%s", enumName, variantName)
+	return fmt.Sprintf("_gogo_gen_%s_%s", enumName, variantName)
 }
 
 func transformEnumSelectors(src string, enums map[string]enumInfo) string {
@@ -742,7 +742,7 @@ func transformMatchBlock(expr, body, indent string, enums map[string]enumInfo, m
 	}
 
 	var b strings.Builder
-	matchVar := fmt.Sprintf("_gogo_internal_match_%d", matchIndex)
+	matchVar := fmt.Sprintf("_gogo_gen_match_%d", matchIndex)
 	if info.IsADT {
 		b.WriteString(indent)
 		b.WriteString("switch ")

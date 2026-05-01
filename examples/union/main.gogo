@@ -1,0 +1,41 @@
+// Package main demonstrates gogo union types.
+//
+// Union types are declared with '=' and '|':
+//
+//	type Name = TypeA | TypeB
+//
+// gogo transforms these into Go 1.18 interface type constraints so they can be
+// used as bounds on generic type parameters.
+package main
+
+import "fmt"
+
+// Number is a union of the built-in numeric types.
+// gogo transforms this to: type Number interface{ int | float64 }
+type Number = int | float64
+
+// Ordered can be any type for which < and > are defined.
+// The ~ prefix means "any type whose underlying type is T".
+type Ordered = ~int | ~int8 | ~int16 | ~int32 | ~int64 |
+	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
+	~float32 | ~float64 | ~string
+
+// Sum returns the sum of two values of any Number type.
+func Sum[T Number](a, b T) T {
+	return a + b
+}
+
+// Max returns the larger of two Ordered values.
+func Max[T Ordered](a, b T) T {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func main() {
+	fmt.Println("Sum(1, 2)        =", Sum(1, 2))
+	fmt.Println("Sum(1.5, 2.5)    =", Sum(1.5, 2.5))
+	fmt.Println(`Max("go", "gogo") =`, Max("go", "gogo"))
+	fmt.Println("Max(42, 7)       =", Max(42, 7))
+}

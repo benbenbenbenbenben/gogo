@@ -1,0 +1,14 @@
+# Build artifacts
+/gogo
+/gogo.exe
+
+# gogo generated files (produced by "gogo build" / "gogo test")
+*_gogo_gen.go
+
+# Go test cache
+/testdata/
+
+# Editor files
+.idea/
+.vscode/
+*.swp

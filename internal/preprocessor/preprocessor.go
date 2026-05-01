@@ -139,7 +139,7 @@ func isEnumTypeStart(trimmed string) bool {
 		return false
 	}
 	rest = strings.TrimSpace(rest[nameEnd:])
-	return strings.HasPrefix(rest, "enum") && strings.Contains(rest, "{")
+	return hasEnumKeywordPrefix(rest) && strings.Contains(rest, "{")
 }
 
 // isUnionTypeStart reports whether trimmed is the beginning of a gogo union
@@ -173,7 +173,7 @@ func transformEnumType(lines []string) string {
 	}
 	name := rest[:nameEnd]
 	rest = strings.TrimSpace(rest[nameEnd:])
-	if !strings.HasPrefix(rest, "enum") {
+	if !hasEnumKeywordPrefix(rest) {
 		return strings.Join(lines, "\n")
 	}
 
@@ -191,7 +191,7 @@ func transformEnumType(lines []string) string {
 		body = body[:end]
 	}
 
-	variants := parseEnumVariants(body)
+	variants := extractEnumVariantNames(body)
 	if len(variants) == 0 {
 		return strings.Join(lines, "\n")
 	}
@@ -274,7 +274,22 @@ func getIndent(line string) string {
 	return line[:len(line)-len(strings.TrimLeft(line, " \t"))]
 }
 
-func parseEnumVariants(body string) []string {
+func hasEnumKeywordPrefix(s string) bool {
+	if !strings.HasPrefix(s, "enum") {
+		return false
+	}
+	if len(s) == len("enum") {
+		return true
+	}
+	switch s[len("enum")] {
+	case ' ', '\t', '{':
+		return true
+	default:
+		return false
+	}
+}
+
+func extractEnumVariantNames(body string) []string {
 	var variants []string
 	for _, line := range strings.Split(body, "\n") {
 		line = strings.TrimSpace(line)

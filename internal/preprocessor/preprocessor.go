@@ -327,7 +327,7 @@ func renderADTEnumType(info enumInfo, indent string) string {
 		}
 	}
 
-	return b.String()
+	return strings.TrimRight(b.String(), "\n")
 }
 
 // transformUnionType converts a gogo union type declaration to a Go interface
@@ -690,6 +690,12 @@ func transformMatchStatements(src string, enums map[string]enumInfo) string {
 			i++
 			continue
 		}
+		lineStart := strings.LastIndex(src[:i], "\n") + 1
+		if strings.TrimSpace(src[lineStart:i]) == "" && indent != "" {
+			prefix := b.String()
+			b.Reset()
+			b.WriteString(prefix[:len(prefix)-len(indent)])
+		}
 		b.WriteString(transformed)
 		i = blockEnd + 1
 		matchIndex++
@@ -758,7 +764,7 @@ func transformMatchBlock(expr, body, indent string, enums map[string]enumInfo, m
 	for _, clause := range parsed {
 		b.WriteString(indent)
 		if clause.Default {
-			b.WriteString("case")
+			b.WriteString("default")
 		} else {
 			b.WriteString("case ")
 			if info.IsADT {
@@ -789,8 +795,9 @@ func transformMatchBlock(expr, body, indent string, enums map[string]enumInfo, m
 			b.WriteString("\n")
 		}
 		if clause.Body != "" {
-			b.WriteString(clause.Body)
-			if !strings.HasSuffix(clause.Body, "\n") {
+			body := strings.TrimRight(clause.Body, " \t\r\n")
+			b.WriteString(body)
+			if !strings.HasSuffix(body, "\n") {
 				b.WriteString("\n")
 			}
 		}

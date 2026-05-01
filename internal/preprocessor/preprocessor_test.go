@@ -142,6 +142,25 @@ func TestTransformEnumType(t *testing.T) {
 			}, "\n"),
 		},
 		{
+			name: "enum with comments",
+			input: []string{
+				"type Color enum {",
+				"\tRed, // warm",
+				"\t/* cool */ Green,",
+				"\tBlue",
+				"}",
+			},
+			want: strings.Join([]string{
+				"type Color int",
+				"",
+				"const (",
+				"\tColorRed Color = iota",
+				"\tColorGreen",
+				"\tColorBlue",
+				")",
+			}, "\n"),
+		},
+		{
 			name: "indented enum",
 			input: []string{
 				"\ttype Token enum {",
@@ -316,6 +335,46 @@ type Bar interface{ int | string }
 				"\tModeWrite",
 				"\tModeExec",
 				")",
+			}, "\n"),
+		},
+		{
+			name: "enum type with block comments",
+			input: strings.Join([]string{
+				"package foo",
+				"",
+				"type Color enum {",
+				"\tRed, // warm",
+				"\t/* cool */ Green,",
+				"\tBlue",
+				"}",
+			}, "\n"),
+			want: strings.Join([]string{
+				"package foo",
+				"",
+				"type Color int",
+				"",
+				"const (",
+				"\tColorRed Color = iota",
+				"\tColorGreen",
+				"\tColorBlue",
+				")",
+			}, "\n"),
+		},
+		{
+			name: "invalid enum variants pass through unchanged",
+			input: strings.Join([]string{
+				"package foo",
+				"",
+				"type Bad enum {",
+				"\t123Invalid",
+				"}",
+			}, "\n"),
+			want: strings.Join([]string{
+				"package foo",
+				"",
+				"type Bad enum {",
+				"\t123Invalid",
+				"}",
 			}, "\n"),
 		},
 		{

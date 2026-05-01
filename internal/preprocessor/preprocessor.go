@@ -44,6 +44,7 @@ package preprocessor
 
 import (
 	"strings"
+	"unicode"
 )
 
 // Process transforms gogo source code into valid Go source code.
@@ -87,7 +88,7 @@ func Process(src string) string {
 					return strings.Join(append(out, block...), "\n")
 				}
 				block = append(block, lines[i])
-				if strings.Contains(lines[i], "}") {
+				if isEnumTypeEnd(lines[i], len(block) == 1) {
 					break
 				}
 				i++
@@ -191,7 +192,10 @@ func transformEnumType(lines []string) string {
 		body = body[:end]
 	}
 
-	variants := extractEnumVariantNames(body)
+	variants, ok := extractEnumVariantNames(body)
+	if !ok {
+		return strings.Join(lines, "\n")
+	}
 	if len(variants) == 0 {
 		return strings.Join(lines, "\n")
 	}
@@ -274,6 +278,14 @@ func getIndent(line string) string {
 	return line[:len(line)-len(strings.TrimLeft(line, " \t"))]
 }
 
+func isEnumTypeEnd(line string, allowInline bool) bool {
+	trimmed := strings.TrimSpace(line)
+	if allowInline {
+		return strings.Contains(trimmed, "}")
+	}
+	return strings.HasPrefix(trimmed, "}")
+}
+
 func hasEnumKeywordPrefix(s string) bool {
 	if !strings.HasPrefix(s, "enum") {
 		return false
@@ -289,11 +301,15 @@ func hasEnumKeywordPrefix(s string) bool {
 	}
 }
 
-func extractEnumVariantNames(body string) []string {
+func extractEnumVariantNames(body string) ([]string, bool) {
+	body = stripBlockComments(body)
 	var variants []string
 	for _, line := range strings.Split(body, "\n") {
 		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "//") {
+		if idx := strings.Index(line, "//"); idx >= 0 {
+			line = strings.TrimSpace(line[:idx])
+		}
+		if line == "" {
 			continue
 		}
 		for _, part := range strings.Split(line, ",") {
@@ -301,8 +317,71 @@ func extractEnumVariantNames(body string) []string {
 			if variant == "" {
 				continue
 			}
+			if !isValidGoIdentifier(variant) {
+				return nil, false
+			}
 			variants = append(variants, variant)
 		}
 	}
-	return variants
+	return variants, true
+}
+
+func stripBlockComments(s string) string {
+	for {
+		start := strings.Index(s, "/*")
+		if start < 0 {
+			return s
+		}
+		end := strings.Index(s[start+2:], "*/")
+		if end < 0 {
+			return s[:start]
+		}
+		s = s[:start] + s[start+2+end+2:]
+	}
+}
+
+func isValidGoIdentifier(s string) bool {
+	if s == "" || goKeywords[s] {
+		return false
+	}
+	for i, r := range s {
+		if i == 0 {
+			if r != '_' && !unicode.IsLetter(r) {
+				return false
+			}
+			continue
+		}
+		if r != '_' && !unicode.IsLetter(r) && !unicode.IsDigit(r) {
+			return false
+		}
+	}
+	return true
+}
+
+var goKeywords = map[string]bool{
+	"break":       true,
+	"default":     true,
+	"func":        true,
+	"interface":   true,
+	"select":      true,
+	"case":        true,
+	"defer":       true,
+	"go":          true,
+	"map":         true,
+	"struct":      true,
+	"chan":        true,
+	"else":        true,
+	"goto":        true,
+	"package":     true,
+	"switch":      true,
+	"const":       true,
+	"fallthrough": true,
+	"if":          true,
+	"range":       true,
+	"type":        true,
+	"continue":    true,
+	"for":         true,
+	"import":      true,
+	"return":      true,
+	"var":         true,
 }

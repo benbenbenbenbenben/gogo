@@ -116,7 +116,7 @@ func removeIfExists(path string) error {
 
 func shouldSkipDir(name string) bool {
 	switch name {
-	case ".git", ".hg", ".svn":
+	case ".git", ".hg", ".idea", ".svn", ".vscode", "node_modules", "vendor":
 		return true
 	default:
 		return false

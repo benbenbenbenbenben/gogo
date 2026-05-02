@@ -83,8 +83,11 @@ func syncInterval() time.Duration {
 	}
 
 	d, err := time.ParseDuration(value)
-	if err != nil || d <= 0 {
-		fatalf("invalid GOGOPLS_SYNC_INTERVAL %q (expected values like 1s or 2500ms)", value)
+	if err != nil {
+		fatalf("failed to parse GOGOPLS_SYNC_INTERVAL %q (expected values like 1s or 2500ms)", value)
+	}
+	if d <= 0 {
+		fatalf("GOGOPLS_SYNC_INTERVAL must be positive, got %q", value)
 	}
 	return d
 }

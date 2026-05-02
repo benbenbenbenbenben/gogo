@@ -61,6 +61,71 @@ type Ordered = ~int  | ~int8  | ~int16 | ~int32 | ~int64  |
 
 All existing `.go` syntax is accepted unchanged — gogo is a strict superset.
 
+### Enum ADTs and matching
+
+gogo supports enum declarations for both plain variants and payload-carrying variants:
+
+```gogo
+type Color enum {
+    Red
+    Green
+    Blue
+    RGB(r byte, g byte, b byte)
+}
+```
+
+Enums without payloads are transformed into integer-backed Go enums with generated constants:
+
+```go
+type Color int
+
+const (
+    ColorRed Color = iota
+    ColorGreen
+    ColorBlue
+)
+```
+
+Payload-carrying enums are transformed into interface-based tagged unions with generated constructors:
+
+```go
+type Color interface{ _gogo_is_Color() }
+
+type _gogo_gen_Color_Red struct{}
+func (_gogo_gen_Color_Red) _gogo_is_Color() {}
+var ColorRed Color = _gogo_gen_Color_Red{}
+
+type _gogo_gen_Color_RGB struct {
+    r byte
+    g byte
+    b byte
+}
+func (_gogo_gen_Color_RGB) _gogo_is_Color() {}
+func ColorRGB(r byte, g byte, b byte) Color {
+    return _gogo_gen_Color_RGB{r: r, g: g, b: b}
+}
+```
+
+Use `Type.Variant` syntax in `.gogo` code for construction:
+
+```gogo
+var red = Color.Red
+var accent = Color.RGB(128, 64, 255)
+```
+
+And use `match` for variant-aware branching:
+
+```gogo
+match color {
+case Color.Red:
+    println("red")
+case Color.RGB(r, g, b):
+    println(r, g, b)
+default:
+    println("other")
+}
+```
+
 ## Example
 
 See [`examples/union/main.gogo`](examples/union/main.gogo) for a working example.

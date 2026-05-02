@@ -38,7 +38,7 @@ func (s *Syncer) Sync() error {
 			return nil
 		}
 		if d.IsDir() {
-			if d.Name() == ".git" {
+			if shouldSkipDir(d.Name()) {
 				return filepath.SkipDir
 			}
 			return nil
@@ -112,4 +112,13 @@ func removeIfExists(path string) error {
 		return nil
 	}
 	return err
+}
+
+func shouldSkipDir(name string) bool {
+	switch name {
+	case ".git", ".hg", ".svn":
+		return true
+	default:
+		return false
+	}
 }

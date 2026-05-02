@@ -6,6 +6,7 @@
 
 ```sh
 go install github.com/benbenbenbenbenben/gogo/cmd/gogo@latest
+go install github.com/benbenbenbenbenben/gogo/cmd/gogopls@latest
 ```
 
 ## Usage
@@ -15,8 +16,15 @@ gogo run   [goflags] <file.gogo> [-- program args]
 gogo build [goflags] [packages]
 gogo test  [goflags] [packages]
 gogo preprocess <file.gogo>         # print preprocessed Go to stdout (for debugging)
+gogopls [gopls args...]             # keep .gogo files mirrored as generated Go for gopls
 gogo <go command> [args...]         # passed through to the Go toolchain unchanged
 ```
+
+## Language service
+
+Run `gogopls` anywhere you would normally run `gopls`. It keeps `*_gogo_gen.go`
+files in sync for the current workspace while `gopls` is running, so editors can
+type-check and navigate packages that contain `.gogo` sources.
 
 ## Language extensions
 

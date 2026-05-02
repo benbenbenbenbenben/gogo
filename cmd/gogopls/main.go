@@ -14,7 +14,7 @@ import (
 	"github.com/benbenbenbenbenben/gogo/internal/gogopls"
 )
 
-const syncInterval = 500 * time.Millisecond
+const defaultSyncInterval = 2 * time.Second
 
 func main() {
 	root, err := os.Getwd()
@@ -32,7 +32,7 @@ func main() {
 
 	done := make(chan struct{})
 	go func() {
-		ticker := time.NewTicker(syncInterval)
+		ticker := time.NewTicker(syncInterval())
 		defer ticker.Stop()
 		defer close(done)
 		for {
@@ -74,4 +74,17 @@ func main() {
 func fatalf(format string, a ...any) {
 	fmt.Fprintf(os.Stderr, format+"\n", a...)
 	os.Exit(1)
+}
+
+func syncInterval() time.Duration {
+	value := os.Getenv("GOGOPLS_SYNC_INTERVAL")
+	if value == "" {
+		return defaultSyncInterval
+	}
+
+	d, err := time.ParseDuration(value)
+	if err != nil || d <= 0 {
+		fatalf("invalid GOGOPLS_SYNC_INTERVAL %q", value)
+	}
+	return d
 }

@@ -24,7 +24,9 @@ gogo <go command> [args...]         # passed through to the Go toolchain unchang
 
 Run `gogopls` anywhere you would normally run `gopls`. It keeps `*_gogo_gen.go`
 files in sync for the current workspace while `gopls` is running, so editors can
-type-check and navigate packages that contain `.gogo` sources.
+type-check and navigate packages that contain `.gogo` sources. Set
+`GOGOPLS_SYNC_INTERVAL` to a Go duration such as `1s` or `2500ms` to tune the
+polling interval.
 
 ## Language extensions
 

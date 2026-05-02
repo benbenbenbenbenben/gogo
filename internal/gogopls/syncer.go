@@ -59,7 +59,7 @@ func (s *Syncer) Sync() error {
 			genPath: sourcegen.GeneratedPath(path),
 		}
 		prev, ok := s.files[path]
-		if !ok || prev.modTime != state.modTime || prev.size != state.size {
+		if !ok || !prev.modTime.Equal(state.modTime) || prev.size != state.size {
 			genPath, err := sourcegen.WriteGeneratedSibling(path)
 			if err != nil {
 				errs = append(errs, err)

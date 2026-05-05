@@ -6,6 +6,8 @@
 
 ```sh
 go install github.com/benbenbenbenbenben/gogo/cmd/gogo@latest
+go install github.com/benbenbenbenbenben/gogo/cmd/gogopls@latest
+go install golang.org/x/tools/gopls@latest
 ```
 
 ## Usage
@@ -15,8 +17,18 @@ gogo run   [goflags] <file.gogo> [-- program args]
 gogo build [goflags] [packages]
 gogo test  [goflags] [packages]
 gogo preprocess <file.gogo>         # print preprocessed Go to stdout (for debugging)
+gogopls [gopls args...]             # keep .gogo files mirrored as generated Go for gopls
 gogo <go command> [args...]         # passed through to the Go toolchain unchanged
 ```
+
+## Language service
+
+Run `gogopls` anywhere you would normally run `gopls`. It keeps `*_gogo_gen.go`
+files in sync for the current workspace while `gopls` is running, so editors can
+type-check and navigate packages that contain `.gogo` sources. Set
+`GOGOPLS_SYNC_INTERVAL` to a Go duration such as `1s` or `2500ms` to tune the
+polling interval. `gogopls` shells out to the `gopls` binary, so `gopls` must
+also be installed and available on your `PATH`.
 
 ## Language extensions
 

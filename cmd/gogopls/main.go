@@ -72,7 +72,7 @@ func main() {
 }
 
 func fatalf(format string, a ...any) {
-	fmt.Fprintf(os.Stderr, format+"\n", a...)
+	fmt.Fprintf(os.Stderr, "gogopls: "+format+"\n", a...)
 	os.Exit(1)
 }
 

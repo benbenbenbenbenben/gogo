@@ -7,6 +7,7 @@
 ```sh
 go install github.com/benbenbenbenbenben/gogo/cmd/gogo@latest
 go install github.com/benbenbenbenbenben/gogo/cmd/gogopls@latest
+go install golang.org/x/tools/gopls@latest
 ```
 
 ## Usage
@@ -26,7 +27,8 @@ Run `gogopls` anywhere you would normally run `gopls`. It keeps `*_gogo_gen.go`
 files in sync for the current workspace while `gopls` is running, so editors can
 type-check and navigate packages that contain `.gogo` sources. Set
 `GOGOPLS_SYNC_INTERVAL` to a Go duration such as `1s` or `2500ms` to tune the
-polling interval.
+polling interval. `gogopls` shells out to the `gopls` binary, so `gopls` must
+also be installed and available on your `PATH`.
 
 ## Language extensions
 

@@ -70,6 +70,58 @@ type Color enum {
 	}
 }
 
+func TestSyncerRecreatesGeneratedFileWhenMissingOrModified(t *testing.T) {
+	root := t.TempDir()
+	srcPath := filepath.Join(root, "main.gogo")
+	genPath := filepath.Join(root, "main_gogo_gen.go")
+
+	writeFile(t, srcPath, `
+package main
+
+type Number = int | float64
+`)
+
+	syncer := NewSyncer(root)
+	if err := syncer.Sync(); err != nil {
+		t.Fatalf("Sync() error = %v", err)
+	}
+
+	if err := os.Remove(genPath); err != nil {
+		t.Fatalf("Remove(%s) error = %v", genPath, err)
+	}
+	if err := syncer.Sync(); err != nil {
+		t.Fatalf("Sync() after generated delete error = %v", err)
+	}
+	got := readFile(t, genPath)
+	if !strings.Contains(got, "type Number interface{ int | float64 }") {
+		t.Fatalf("generated file was not recreated:\n%s", got)
+	}
+
+	writeFile(t, genPath, "package main\n\nvar stale = true\n")
+	if err := syncer.Sync(); err != nil {
+		t.Fatalf("Sync() after generated modification error = %v", err)
+	}
+	got = readFile(t, genPath)
+	if strings.Contains(got, "var stale = true") {
+		t.Fatalf("generated file was not restored:\n%s", got)
+	}
+}
+
+func TestSyncerRemovesOrphanedGeneratedFiles(t *testing.T) {
+	root := t.TempDir()
+	orphanPath := filepath.Join(root, "orphan_gogo_gen.go")
+	writeFile(t, orphanPath, "package main\n")
+
+	syncer := NewSyncer(root)
+	if err := syncer.Sync(); err != nil {
+		t.Fatalf("Sync() error = %v", err)
+	}
+
+	if _, err := os.Stat(orphanPath); !os.IsNotExist(err) {
+		t.Fatalf("expected orphaned generated file to be removed, stat err = %v", err)
+	}
+}
+
 func writeFile(t *testing.T, path, contents string) {
 	t.Helper()
 	if err := os.WriteFile(path, []byte(contents), 0o644); err != nil {

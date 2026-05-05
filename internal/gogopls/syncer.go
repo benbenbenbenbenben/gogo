@@ -70,12 +70,7 @@ func (s *Syncer) Sync() error {
 		prev, ok := s.files[path]
 		genInfo, genExists, err := generatedFileInfo(state.genPath)
 		if err != nil {
-			errs = append(errs, err)
-			if ok {
-				current[path] = prev
-			} else {
-				current[path] = fileState{genPath: state.genPath}
-			}
+			handleSyncError(&errs, current, path, state.genPath, prev, ok, err)
 			return nil
 		}
 
@@ -89,23 +84,13 @@ func (s *Syncer) Sync() error {
 		if needsRegeneration {
 			genPath, err := sourcegen.WriteGeneratedSibling(path)
 			if err != nil {
-				errs = append(errs, err)
-				if ok {
-					current[path] = prev
-				} else {
-					current[path] = fileState{genPath: state.genPath}
-				}
+				handleSyncError(&errs, current, path, state.genPath, prev, ok, err)
 				return nil
 			}
 			state.genPath = genPath
 			genInfo, _, err = generatedFileInfo(genPath)
 			if err != nil {
-				errs = append(errs, err)
-				if ok {
-					current[path] = prev
-				} else {
-					current[path] = fileState{genPath: state.genPath}
-				}
+				handleSyncError(&errs, current, path, state.genPath, prev, ok, err)
 				return nil
 			}
 		}
@@ -180,6 +165,15 @@ func generatedStateChanged(prev fileState, info fs.FileInfo) bool {
 		return true
 	}
 	return !prev.genModTime.Equal(info.ModTime()) || prev.genSize != info.Size()
+}
+
+func handleSyncError(errs *[]error, current map[string]fileState, path, genPath string, prev fileState, ok bool, err error) {
+	*errs = append(*errs, err)
+	if ok {
+		current[path] = prev
+		return
+	}
+	current[path] = fileState{genPath: genPath}
 }
 
 func removeOrphanedGeneratedFile(path string) error {

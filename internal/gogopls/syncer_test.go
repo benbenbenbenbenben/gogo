@@ -117,7 +117,7 @@ func TestSyncerRemovesOrphanedGeneratedFiles(t *testing.T) {
 		t.Fatalf("Sync() error = %v", err)
 	}
 
-	if _, err := os.Stat(orphanPath); !os.IsNotExist(err) {
+	if _, err := os.Stat(orphanPath); err == nil || !os.IsNotExist(err) {
 		t.Fatalf("expected orphaned generated file to be removed, stat err = %v", err)
 	}
 }
